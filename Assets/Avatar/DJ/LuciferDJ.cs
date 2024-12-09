@@ -23,6 +23,8 @@ namespace Lereldarion {
         [Header("DJ Controller")]
         public VRCParentConstraint dj_controller;
 
+        public Renderer midi_output;
+
         public VRCRotationConstraint potentiometer_driver;
         public VRCRotationConstraint potentiometer_hand_tracker;
         public VRCContactReceiver potentiometer_contact;
@@ -100,6 +102,19 @@ namespace Lereldarion {
                 enabled.TransitionsTo(world).When(dj_enabled.IsTrue()).And(dj_world.IsTrue());
                 world.TransitionsTo(enabled).When(dj_world.IsFalse());
             }
+            // Only enable the midi shader locally
+            {
+                var layer = ctrl.NewLayer("DJ/MidiShader");
+
+                var remote = layer.NewState("Remote");
+                remote.WithAnimation(aac.NewClip().Animating(clip => clip.Animates(config.midi_output, "_DJ_Enable").WithOneFrame(0)));
+
+                var local = layer.NewState("Local");
+                local.WithAnimation(aac.NewClip().Animating(clip => clip.Animates(config.midi_output, "_DJ_Enable").WithOneFrame(1)));
+
+                remote.TransitionsTo(local).When(layer.Av3().ItIsLocal());
+                local.TransitionsTo(remote).When(layer.Av3().ItIsRemote());
+            }
             // Potentiometer system
             {
                 var layer = ctrl.NewLayer("DJ/Potentiometer");
@@ -129,7 +144,7 @@ namespace Lereldarion {
                 layer.AnyTransitionsTo(disabled).When(dj_enabled.IsFalse());
 
                 standby.TransitionsTo(grabbed).When(contact.IsTrue());
-                grabbed.TransitionsTo(standby).When(contact.IsFalse());
+                grabbed.TransitionsTo(standby).When(contact.IsFalse()).And(layer.Av3().GestureRight.IsNotEqualTo(AacAv3.Av3Gesture.Fist));
             }
             ma.NewMergeAnimator(ctrl.AnimatorController, VRCAvatarDescriptor.AnimLayerType.FX);
         }

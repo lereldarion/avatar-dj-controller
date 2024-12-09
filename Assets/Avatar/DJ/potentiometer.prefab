@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3305010656204075266}
   - component: {fileID: 1942623272443199132}
   m_Layer: 0
-  m_Name: RawRotation
+  m_Name: Handle_Unlimited
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -173,12 +173,12 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -0.08
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
         type: 3}
@@ -248,6 +248,10 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 7193534330326965139}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -7589154548945093812, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3611174049243305376}
     - targetCorrespondingSourceObject: {fileID: -4524874626058609607, guid: 2d44c8da088828449ba77b1599350e11,
         type: 3}
       insertIndex: -1
@@ -269,6 +273,38 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 2437716453995200905}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3997342789457427141 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -7589154548945093812, guid: 2d44c8da088828449ba77b1599350e11,
+    type: 3}
+  m_PrefabInstance: {fileID: 2437716453995200905}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3611174049243305376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3997342789457427141}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1450912254, guid: 80f1b8067b0760e4bb45023bc2e9de66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rootTransform: {fileID: 0}
+  shapeType: 0
+  radius: 0.017
+  height: 2
+  position: {x: 0, y: 0.016, z: 0}
+  rotation: {x: 0, y: 0, z: 0, w: 1}
+  collisionTags:
+  - FingerR
+  allowSelf: 1
+  allowOthers: 0
+  localOnly: 0
+  receiverType: 0
+  parameter: Potentiometer/Grabbed
+  minVelocity: 0.05
 --- !u!1 &6980835279449578928 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -4524874626058609607, guid: 2d44c8da088828449ba77b1599350e11,
