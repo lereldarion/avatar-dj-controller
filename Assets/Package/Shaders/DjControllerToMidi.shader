@@ -51,8 +51,9 @@ Shader "Lereldarion/DjControllerToMidi" {
 
             struct FragmentInput {
                 float4 position_cs : SV_POSITION;
-                float pixel : PIXEL; // Pixel position in controller item line
-                nointerpolation uint midi_value : MIDI_VALUE; // 7 bits
+
+                float bit_index : BIT_INDEX;
+                nointerpolation uint bits : BITS;
 
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -76,35 +77,42 @@ Shader "Lereldarion/DjControllerToMidi" {
                 output.uv0 = input.uv0;
             }
 
+            void draw_value_bits_as_line(inout LineStream<FragmentInput> stream, uint value, float2 pixel_position) {
+                FragmentInput output;
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                uint bit_count = 7; // max 16 bits
+                uint mask = (1 << bit_count) - 1; // 2^count - 1 = 001...1 (count)
+                uint bits = value & mask;
+                uint checksum = countbits(bits); // 4 bits for 16 bits
+                // Data : [value:16][checksum:4]10 ; 10 for calibration with post processing
+                output.bits = (bits << 6) | (checksum << 2) | 2;
+                // Line
+                output.bit_index = 0;
+                output.position_cs = screen_pixel_to_cs(pixel_position + float2(0, output.bit_index));
+                stream.Append(output);
+                output.bit_index = bit_count + 4 + 2;
+                output.position_cs = screen_pixel_to_cs(pixel_position + float2(0, output.bit_index));
+                stream.Append(output);
+            }
+
             [maxvertexcount(2)]
             void geometry_stage(triangle GeometryVertexData input[3], inout LineStream<FragmentInput> stream, uint triangle_id : SV_PrimitiveID) {
                 UNITY_SETUP_INSTANCE_ID(input[0]);
 
                 // Display in small Desktop vindow when stream camera is used from within VR.
                 // Ignore mirrors. Animate DJ_Enable to match IsLocal and do not break streamers.
-                if(!(_VRChatCameraMode == 1 && _VRChatMirrorMode == 0 && _DJ_Enable)) { return ; }
+                if(!(_VRChatCameraMode == 0 && _VRChatMirrorMode == 0 && _DJ_Enable)) { return; }
 
-                uint midi_value = triangle_id * 127; // TODO compute for various cases
+                uint midi_value = (triangle_id * 127) & 127; // TODO compute for various cases
 
-                FragmentInput output;
-                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-                output.midi_value = midi_value;
-
-                output.pixel = 0;
-                output.position_cs = screen_pixel_to_cs(float2(triangle_id, output.pixel)); stream.Append(output);
-                output.pixel = 2 + 7;
-                output.position_cs = screen_pixel_to_cs(float2(triangle_id, output.pixel)); stream.Append(output);
+                draw_value_bits_as_line(stream, midi_value, float2(triangle_id, 0));
             }
 
             fixed4 fragment_stage(FragmentInput input) : SV_Target {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-
-                // [7 midi bits]10
-                // The 10 is used to calibrate decoder, which works on pixels after post-processing
-                uint bit_mask = (input.midi_value << 2) | 2;
-                
-                uint pixel = input.pixel;
-                bool bit = (bit_mask >> pixel) & 1;
+                uint bit_index = input.bit_index;
+                bool bit = (input.bits >> bit_index) & 1;
                 return bit ? fixed4(1, 1, 1, 1) : fixed4(0, 0, 0, 0);
             }
             ENDCG            
