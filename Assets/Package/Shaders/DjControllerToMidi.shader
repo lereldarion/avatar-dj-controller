@@ -65,10 +65,10 @@ Shader "Lereldarion/DjControllerToMidi" {
             uniform float _DJ_Enable;
 
             float4 screen_pixel_to_cs(float2 pixel_coord) {
-                float4 pos = float4(pixel_coord / _ScreenParams.xy, UNITY_NEAR_CLIP_VALUE, 1);
-                pos.xy = pos.xy * 2.0 - 1.0; // To [-1, 1]
-                if (_ProjectionParams.x < 0) { pos.y = -pos.y; } // https://docs.unity3d.com/Manual/SL-PlatformDifferences.html
-                return pos;
+                float2 screen = _ScreenParams.xy;
+                float2 position_cs = (pixel_coord * 2 - screen + 1) / screen; // +1 = center of pixels
+                if (_ProjectionParams.x < 0) { position_cs.y = -position_cs.y; } // https://docs.unity3d.com/Manual/SL-PlatformDifferences.html
+                return float4(position_cs, UNITY_NEAR_CLIP_VALUE, 1);
             }
 
             void vertex_stage(VertexData input, out GeometryVertexData output) {
@@ -90,12 +90,13 @@ Shader "Lereldarion/DjControllerToMidi" {
                 uint checksum = countbits(bits); // 4 bits for 16 bits
                 // Data : [value:16][checksum:4]10 ; 10 for calibration with post processing
                 output.bits = (bits << 6) | (checksum << 2) | 2;
+                bit_count = bit_count + 4 + 2;
                 // Line
                 output.bit_index = 0;
-                output.position_cs = screen_pixel_to_cs(pixel_position + float2(0, output.bit_index) + 0 * 0.5); // FIXME boundaries
+                output.position_cs = screen_pixel_to_cs(pixel_position);
                 stream.Append(output);
-                output.bit_index = bit_count + 4 + 2;
-                output.position_cs = screen_pixel_to_cs(pixel_position + float2(0, output.bit_index) + 0 * 0.5);
+                output.bit_index = bit_count;
+                output.position_cs = screen_pixel_to_cs(pixel_position + float2(0, bit_count));
                 stream.Append(output);
             }
 
@@ -105,7 +106,7 @@ Shader "Lereldarion/DjControllerToMidi" {
 
                 // Display in small Desktop vindow when stream camera is used from within VR.
                 // Ignore mirrors. Animate DJ_Enable to match IsLocal and do not break streamers.
-                if(!(_VRChatCameraMode == 0 && _VRChatMirrorMode == 0 && _DJ_Enable)) { return; }
+                if(!(_VRChatCameraMode == 1 && _VRChatMirrorMode == 0 && _DJ_Enable)) { return; }
 
                 float type = input[0].uv0.x;
                 float screen_x = input[0].uv0.y;
@@ -133,7 +134,7 @@ Shader "Lereldarion/DjControllerToMidi" {
 
             fixed4 fragment_stage(FragmentInput input) : SV_Target {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                uint bit_index = input.bit_index;
+                uint bit_index = input.bit_index + 0.5; // +0.5 = compensate pixel position being centered in screen_pixel_to_cs
                 bool bit = (input.bits >> bit_index) & 1;
                 return bit ? fixed4(1, 1, 1, 1) : fixed4(0, 0, 0, 0);
             }
