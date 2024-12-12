@@ -38,14 +38,16 @@ Shader "Lereldarion/DjControllerToMidi" {
             struct VertexData {
                 float3 position_os : POSITION;
                 float3 normal_os_unnormalized : NORMAL; // May be not normalized after skinning
-                float4 uv0 : TEXCOORD0;
+                float2 uv0 : TEXCOORD0;
+                float2 uv1 : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct GeometryVertexData {
                 float3 position_os : POSITION_OS;
                 float3 normal_os : NORMAL_OS;
-                float4 uv0 : TEXCOORD0;
+                float2 uv0 : TEXCOORD0;
+                float2 uv1 : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -75,13 +77,14 @@ Shader "Lereldarion/DjControllerToMidi" {
                 output.position_os = input.position_os;
                 output.normal_os = normalize(input.normal_os_unnormalized);
                 output.uv0 = input.uv0;
+                output.uv1 = input.uv1;
             }
 
             void draw_value_bits_as_line(inout LineStream<FragmentInput> stream, uint value, float2 pixel_position) {
                 FragmentInput output;
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-                uint bit_count = 7; // max 16 bits
+                uint bit_count = 16; // max 16 bits FIXME using 16 for debug
                 uint mask = (1 << bit_count) - 1; // 2^count - 1 = 001...1 (count)
                 uint bits = value & mask;
                 uint checksum = countbits(bits); // 4 bits for 16 bits
@@ -89,10 +92,10 @@ Shader "Lereldarion/DjControllerToMidi" {
                 output.bits = (bits << 6) | (checksum << 2) | 2;
                 // Line
                 output.bit_index = 0;
-                output.position_cs = screen_pixel_to_cs(pixel_position + float2(0, output.bit_index));
+                output.position_cs = screen_pixel_to_cs(pixel_position + float2(0, output.bit_index) + 0 * 0.5); // FIXME boundaries
                 stream.Append(output);
                 output.bit_index = bit_count + 4 + 2;
-                output.position_cs = screen_pixel_to_cs(pixel_position + float2(0, output.bit_index));
+                output.position_cs = screen_pixel_to_cs(pixel_position + float2(0, output.bit_index) + 0 * 0.5);
                 stream.Append(output);
             }
 
@@ -104,9 +107,28 @@ Shader "Lereldarion/DjControllerToMidi" {
                 // Ignore mirrors. Animate DJ_Enable to match IsLocal and do not break streamers.
                 if(!(_VRChatCameraMode == 0 && _VRChatMirrorMode == 0 && _DJ_Enable)) { return; }
 
-                uint midi_value = (triangle_id * 127) & 127; // TODO compute for various cases
+                float type = input[0].uv0.x;
+                float screen_x = input[0].uv0.y;
+                uint midi_value = 0;
 
-                draw_value_bits_as_line(stream, midi_value, float2(triangle_id, 0));
+                float3x3 positions = float3x3(input[0].position_os, input[1].position_os, input[2].position_os);
+
+                UNITY_BRANCH
+                if(type == 1) {
+                    // Slider
+
+                    // Vectors by using UV coefficients
+                    float3 bottom_handle = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
+                    float3 bottom_top =    mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
+
+                    float ratio = dot(bottom_handle, bottom_top) / dot(bottom_top, bottom_top);
+                    midi_value = saturate(ratio) * float((1 << 16) - 1);
+                } else {
+                    // Discard
+                    return;
+                }
+
+                draw_value_bits_as_line(stream, midi_value, float2(screen_x, 0));
             }
 
             fixed4 fragment_stage(FragmentInput input) : SV_Target {
