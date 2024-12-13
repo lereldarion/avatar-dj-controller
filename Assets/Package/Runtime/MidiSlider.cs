@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using UnityEngine;
 
 namespace Lereldarion.DJ {
@@ -12,4 +11,3 @@ public class MidiSlider : MidiController {
     public Transform handle;
 }
 }
-#endif

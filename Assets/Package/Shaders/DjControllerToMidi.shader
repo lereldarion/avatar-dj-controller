@@ -9,6 +9,7 @@
 Shader "Lereldarion/DjControllerToMidi" {
     Properties {
         [ToggleUI] _DJ_Enable("Enable output pixels", Float) = 1
+        [ToggleUI] _DJ_Debug("Force output on", Float) = 0
     }
     SubShader {
         Tags {
@@ -63,6 +64,7 @@ Shader "Lereldarion/DjControllerToMidi" {
             uniform float _VRChatMirrorMode;
             uniform float _VRChatCameraMode;
             uniform float _DJ_Enable;
+            uniform float _DJ_Debug;
 
             float4 screen_pixel_to_cs(float2 pixel_coord) {
                 float2 screen = _ScreenParams.xy;
@@ -106,7 +108,7 @@ Shader "Lereldarion/DjControllerToMidi" {
 
                 // Display in small Desktop vindow when stream camera is used from within VR.
                 // Ignore mirrors. Animate DJ_Enable to match IsLocal and do not break streamers.
-                if(!(_VRChatCameraMode == 1 && _VRChatMirrorMode == 0 && _DJ_Enable)) { return; }
+                if(!(_VRChatCameraMode == 1 && _VRChatMirrorMode == 0 && _DJ_Enable) && !_DJ_Debug) { return; }
 
                 float type = input[0].uv0.x;
                 float screen_x = input[0].uv0.y;

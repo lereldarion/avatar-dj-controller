@@ -21,7 +21,7 @@ namespace Lereldarion {
         public VRCExpressionsMenu menu_target;
 
         [Header("DJ Controller")]
-        public VRCParentConstraint dj_controller;
+        public VRCParentConstraint dj_controller_container;
 
         public VRCRotationConstraint potentiometer_driver;
         public VRCRotationConstraint potentiometer_hand_tracker;
@@ -75,21 +75,21 @@ namespace Lereldarion {
                 var disabled = layer.NewState("Disabled");
                 disabled.Drives(dj_world, false).DrivingLocally(); // Reset, 2 bools but 3 states
                 disabled.WithAnimation(aac.NewClip()
-                    .Toggling(config.dj_controller.gameObject, false)
-                    .Animating(SetConstraintWorldFixed(config.dj_controller, false))
+                    .Toggling(config.dj_controller_container.gameObject, false)
+                    .Animating(SetConstraintWorldFixed(config.dj_controller_container, false))
                 );
 
                 var enabled = layer.NewState("Enabled");
                 enabled.Drives(dj_world, false).DrivingLocally();
                 enabled.WithAnimation(aac.NewClip()
-                    .Toggling(config.dj_controller.gameObject, true)
-                    .Animating(SetConstraintWorldFixed(config.dj_controller, false))
+                    .Toggling(config.dj_controller_container.gameObject, true)
+                    .Animating(SetConstraintWorldFixed(config.dj_controller_container, false))
                 );
 
                 var world = layer.NewState("World");
                 world.WithAnimation(aac.NewClip()
-                    .Toggling(config.dj_controller.gameObject, true)
-                    .Animating(SetConstraintWorldFixed(config.dj_controller, true))
+                    .Toggling(config.dj_controller_container.gameObject, true)
+                    .Animating(SetConstraintWorldFixed(config.dj_controller_container, true))
                 );
 
                 layer.AnyTransitionsTo(disabled).When(dj_enabled.IsFalse());
@@ -99,19 +99,6 @@ namespace Lereldarion {
 
                 enabled.TransitionsTo(world).When(dj_enabled.IsTrue()).And(dj_world.IsTrue());
                 world.TransitionsTo(enabled).When(dj_world.IsFalse());
-            }
-            // Only enable the midi shader locally
-            if(false) {
-                var layer = ctrl.NewLayer("DJ/MidiShader");
-
-                var remote = layer.NewState("Remote");
-                remote.WithAnimation(aac.NewClip().Animating(clip => clip.Animates(config.dj_controller, "_DJ_Enable").WithOneFrame(0)));
-
-                var local = layer.NewState("Local");
-                local.WithAnimation(aac.NewClip().Animating(clip => clip.Animates(config.dj_controller, "_DJ_Enable").WithOneFrame(1)));
-
-                remote.TransitionsTo(local).When(layer.Av3().ItIsLocal());
-                local.TransitionsTo(remote).When(layer.Av3().ItIsRemote());
             }
             // Potentiometer system
             {
@@ -145,6 +132,8 @@ namespace Lereldarion {
                 grabbed.TransitionsTo(standby).When(contact.IsFalse()).And(layer.Av3().GestureRight.IsNotEqualTo(AacAv3.Av3Gesture.Fist));
             }
             ma.NewMergeAnimator(ctrl.AnimatorController, VRCAvatarDescriptor.AnimLayerType.FX);
+
+            Object.DestroyImmediate(config);
         }
 
         static private System.Action<AacFlEditClip> SetConstraintWorldFixed(VRCConstraintBase constraint, bool fixed_to_world) {
