@@ -93,7 +93,7 @@ Shader "Lereldarion/DjControllerToMidi" {
                 // Data : [~value_bits:7][value_bits:7]10 ; 10 for calibration with post processing
                 output.bits = ((~bits) << (bit_count + 2)) | (bits << 2) | 2;
                 bit_count = 2 * bit_count + 2;
-                
+
                 // Line
                 output.bit_index = 0;
                 output.position_cs = screen_pixel_to_cs(pixel_position);
@@ -109,7 +109,7 @@ Shader "Lereldarion/DjControllerToMidi" {
 
                 // Display in small Desktop vindow when stream camera is used from within VR.
                 // Ignore mirrors. Animate DJ_Enable to match IsLocal and do not break streamers.
-                if(!(_VRChatCameraMode == 1 && _VRChatMirrorMode == 0 && _DJ_Enable > 0.5) && _DJ_Debug < 0.5) { return; }
+                if(!((_VRChatCameraMode == 1 || _DJ_Debug > 0.5) && _VRChatMirrorMode == 0 && _DJ_Enable > 0.5)) { return; }
 
                 float type = round(input[0].uv0.x);
                 float screen_x = input[0].uv0.y;
