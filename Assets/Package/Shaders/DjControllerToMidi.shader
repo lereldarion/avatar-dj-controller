@@ -82,17 +82,18 @@ Shader "Lereldarion/DjControllerToMidi" {
                 output.uv1 = input.uv1;
             }
 
-            void draw_value_bits_as_line(inout LineStream<FragmentInput> stream, uint value, float2 pixel_position) {
+            void draw_midi_value_01_as_bit_line(inout LineStream<FragmentInput> stream, float value_01, float2 pixel_position) {
                 FragmentInput output;
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-                uint bit_count = 16; // max 16 bits FIXME using 16 for debug
+                uint bit_count = 7;
                 uint mask = (1 << bit_count) - 1; // 2^count - 1 = 001...1 (count)
-                uint bits = value & mask;
-                uint checksum = countbits(bits); // 4 bits for 16 bits
-                // Data : [value:16][checksum:4]10 ; 10 for calibration with post processing
-                output.bits = (bits << 6) | (checksum << 2) | 2;
-                bit_count = bit_count + 4 + 2;
+                uint bits = round(saturate(value_01) * float(mask));
+
+                // Data : [~value_bits:7][value_bits:7]10 ; 10 for calibration with post processing
+                output.bits = ((~bits) << (bit_count + 2)) | (bits << 2) | 2;
+                bit_count = 2 * bit_count + 2;
+                
                 // Line
                 output.bit_index = 0;
                 output.position_cs = screen_pixel_to_cs(pixel_position);
@@ -108,30 +109,26 @@ Shader "Lereldarion/DjControllerToMidi" {
 
                 // Display in small Desktop vindow when stream camera is used from within VR.
                 // Ignore mirrors. Animate DJ_Enable to match IsLocal and do not break streamers.
-                if(!(_VRChatCameraMode == 1 && _VRChatMirrorMode == 0 && _DJ_Enable) && !_DJ_Debug) { return; }
+                if(!(_VRChatCameraMode == 1 && _VRChatMirrorMode == 0 && _DJ_Enable > 0.5) && _DJ_Debug < 0.5) { return; }
 
-                float type = input[0].uv0.x;
+                float type = round(input[0].uv0.x);
                 float screen_x = input[0].uv0.y;
-                uint midi_value = 0;
+                float output_01 = 0;
 
                 float3x3 positions = float3x3(input[0].position_os, input[1].position_os, input[2].position_os);
 
                 UNITY_BRANCH
-                if(type == 1) {
-                    // Slider
-
+                if(type == 1 /* slider */) {
                     // Vectors by using UV coefficients
                     float3 bottom_handle = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
                     float3 bottom_top =    mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
-
-                    float ratio = dot(bottom_handle, bottom_top) / dot(bottom_top, bottom_top);
-                    midi_value = saturate(ratio) * float((1 << 16) - 1);
+                    output_01 = dot(bottom_handle, bottom_top) / dot(bottom_top, bottom_top);
                 } else {
                     // Discard
                     return;
                 }
 
-                draw_value_bits_as_line(stream, midi_value, float2(screen_x, 0));
+                draw_midi_value_01_as_bit_line(stream, output_01, float2(screen_x, 0));
             }
 
             fixed4 fragment_stage(FragmentInput input) : SV_Target {
