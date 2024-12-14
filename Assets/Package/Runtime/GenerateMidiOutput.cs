@@ -19,7 +19,7 @@ namespace Lereldarion.DJ {
         [Range(0, 127)]
         public int id;
 
-        public float screen_x => id;
+        public float screen_x => id + 1;
     }
 
     /// <summary>
@@ -29,6 +29,6 @@ namespace Lereldarion.DJ {
         [Range(0, 127)]
         public int id;
 
-        public float screen_x => id + 128;
+        public float screen_x => id + 128 + 1;
     }
 }

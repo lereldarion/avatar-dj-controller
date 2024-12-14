@@ -82,25 +82,27 @@ Shader "Lereldarion/DjControllerToMidi" {
                 output.uv1 = input.uv1;
             }
 
-            void draw_midi_value_01_as_bit_line(inout LineStream<FragmentInput> stream, float value_01, float2 pixel_position) {
+            void draw_bit_pattern_as_line(inout LineStream<FragmentInput> stream, uint bits, uint bit_count, float2 pixel_position) {
                 FragmentInput output;
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.bits = bits;
 
-                uint bit_count = 7;
-                uint mask = (1 << bit_count) - 1; // 2^count - 1 = 001...1 (count)
-                uint bits = round(saturate(value_01) * float(mask));
-
-                // Data : [~value_bits:7][value_bits:7]10 ; 10 for calibration with post processing
-                output.bits = ((~bits) << (bit_count + 2)) | (bits << 2) | 2;
-                bit_count = 2 * bit_count + 2;
-
-                // Line
                 output.bit_index = 0;
                 output.position_cs = screen_pixel_to_cs(pixel_position);
                 stream.Append(output);
                 output.bit_index = bit_count;
                 output.position_cs = screen_pixel_to_cs(pixel_position + float2(0, bit_count));
                 stream.Append(output);
+            }
+            void draw_midi_value_01_as_bit_line(inout LineStream<FragmentInput> stream, float value_01, float2 pixel_position) {
+                uint bit_count = 7;
+                uint mask = (1 << bit_count) - 1; // 2^count - 1 = 001...1 (count)
+                uint bits = round(saturate(value_01) * float(mask));
+
+                // Data : [~value_bits:7][value_bits:7]10 ; 10 for calibration with post processing
+                bits = ((~bits) << (bit_count + 2)) | (bits << 2) | 2;
+                bit_count = 2 * bit_count + 2;
+                draw_bit_pattern_as_line(stream, bits, bit_count, pixel_position);
             }
 
             [maxvertexcount(2)]
@@ -118,7 +120,10 @@ Shader "Lereldarion/DjControllerToMidi" {
                 float3x3 positions = float3x3(input[0].position_os, input[1].position_os, input[2].position_os);
 
                 UNITY_BRANCH
-                if(type == 1 /* slider */) {
+                if(type == 1 /* auto offset tag */) {
+                    draw_bit_pattern_as_line(stream, 0xAAAA, 16, float2(0, 0));
+                    return;
+                } else if(type == 2 /* slider */) {
                     // Vectors by using UV coefficients
                     float3 bottom_handle = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
                     float3 bottom_top =    mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
