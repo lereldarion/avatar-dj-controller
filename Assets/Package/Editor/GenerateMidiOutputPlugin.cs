@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Collections.Generic;
 using AnimatorAsCode.V1;
 using AnimatorAsCode.V1.VRC;
 using nadena.dev.ndmf;
@@ -33,43 +34,22 @@ namespace Lereldarion.DJ
                 DefaultsProvider = new AacDefaultsProvider()
             });
             var animator_controller = aac.NewAnimatorController();
-
-            var context = new Context
+            var animator_context = new AnimatorContext
             {
                 Aac = aac,
                 Left = new HandAnimatorLayer(animator_controller.NewLayer("DJ/LeftHand")),
                 Right = new HandAnimatorLayer(animator_controller.NewLayer("DJ/RightHand")),
-                SliderIndex = 0,
             };
 
-            foreach (var dj_controller_config in ctx.AvatarRootTransform.GetComponentsInChildren<GenerateMidiOutput>(true))
+            foreach (var dj_controller in ctx.AvatarRootTransform.GetComponentsInChildren<GenerateMidiOutput>(true))
             {
-                var mesh = SetupController(dj_controller_config, context);
+                var mesh = SetupController(dj_controller, animator_context);
                 ctx.AssetSaver.SaveAsset(mesh); // Required for proper upload
             }
 
             var ma_object = new GameObject("DJ_Animator") { transform = { parent = ctx.AvatarRootTransform } };
             var ma = AnimatorAsCode.V1.ModularAvatar.MaAc.Create(ma_object);
             ma.NewMergeAnimator(animator_controller, VRC.SDK3.Avatars.Components.VRCAvatarDescriptor.AnimLayerType.FX);
-        }
-
-        private struct Context
-        {
-            public AacFlBase Aac;
-            public HandAnimatorLayer Left;
-            public HandAnimatorLayer Right;
-            public int SliderIndex;
-        }
-        private class HandAnimatorLayer
-        {
-            public AacFlLayer Layer;
-            public AacFlState Standby;
-
-            public HandAnimatorLayer(AacFlLayer layer)
-            {
-                Layer = layer;
-                Standby = Layer.NewState("Standby", 0, 0);
-            }
         }
 
         /// <summary>
@@ -84,6 +64,7 @@ namespace Lereldarion.DJ
             Undefined = 0,
             AutoOffsetTag = 1,
             Slider = 2,
+            Button = 3,
         }
 
         private struct Vertex
@@ -97,17 +78,14 @@ namespace Lereldarion.DJ
         /// Create controller mesh renderer, animator layers, gameobjects from descriptor components.
         /// Remove descriptors from the ndmf copy, to allow d4rkAvatarOptimizer to see no reference to gameobjects and merge properly.
         /// </summary>
-        /// <param name="dj_controller_config">Controller root component : start of search for descriptors, and location where renderer is added</param>
+        /// <param name="dj_controller">Controller root component : start of search for descriptors, and location where renderer is added</param>
         /// <returns>Reference to the created mesh, to be saved as asset by ndmf</returns>
-        private Mesh SetupController(GenerateMidiOutput dj_controller_config, Context context)
+        private Mesh SetupController(GenerateMidiOutput dj_controller, AnimatorContext animator)
         {
-            // This is our object space
-            Transform root = dj_controller_config.transform;
-
+            Transform root = dj_controller.transform;
             Mesh mesh = new Mesh();
-
-            // Triangles are consecutive triplets of vertices.
-            var vertices = new System.Collections.Generic.List<Vertex>();
+            var vertices = new List<Vertex>();
+            var context = new Context { Animator = animator, Controller = dj_controller, Vertices = vertices };
 
             {
                 // Auto offset tag
@@ -117,16 +95,8 @@ namespace Lereldarion.DJ
                 vertices.Add(new Vertex { transform = root, uv0 = uv0 });
             }
 
-            foreach (var slider in root.GetComponentsInChildren<MidiSlider>(true))
-            {
-                // Slider uv1 : coefficients to compute |handle-minimum| / |maximum-minimum| 
-                var uv0 = new Vector2((float)ShaderElementType.Slider, slider.ScreenX);
-                vertices.Add(new Vertex { transform = slider.Minimum, uv0 = uv0, uv1 = new Vector2(-1.0f, -1.0f) });
-                vertices.Add(new Vertex { transform = slider.Maximum, uv0 = uv0, uv1 = new Vector2(0.0f, 1.0f) });
-                vertices.Add(new Vertex { transform = slider.transform, uv0 = uv0, uv1 = new Vector2(1.0f, 0.0f) });
-                SetupSlider(slider, context, dj_controller_config);
-                Object.DestroyImmediate(slider);
-            }
+            foreach (var slider in root.GetComponentsInChildren<MidiSlider>(true)) { SetupSlider(slider, context); }
+            foreach (var button in root.GetComponentsInChildren<MidiPushButton>(true)) { SetupPushButton(button, context); }
 
             mesh.vertices = vertices.Select(vertex => root.InverseTransformPoint(vertex.transform.position)).ToArray();
             mesh.SetUVs(0, vertices.Select(vertex => vertex.uv0).ToArray());
@@ -146,10 +116,37 @@ namespace Lereldarion.DJ
             var renderer = root.gameObject.AddComponent<SkinnedMeshRenderer>();
             renderer.sharedMesh = mesh;
             renderer.bones = bones;
-            renderer.material = dj_controller_config.MidiOutputMaterial;
+            renderer.material = dj_controller.MidiOutputMaterial;
 
-            Object.DestroyImmediate(dj_controller_config); // Cleanup components
+            Object.DestroyImmediate(dj_controller); // Cleanup components
             return mesh;
+        }
+
+        private class Context
+        {
+            public AnimatorContext Animator;
+            public GenerateMidiOutput Controller;
+            public List<Vertex> Vertices;
+            // TODO map of controller / note ids to detect collisions
+        }
+        private class AnimatorContext
+        {
+            public AacFlBase Aac;
+            public HandAnimatorLayer Left;
+            public HandAnimatorLayer Right;
+
+            private int next_slider_index = 0;
+            public int UniqueSliderIndex() { return next_slider_index++; }
+        }
+        private class HandAnimatorLayer
+        {
+            public AacFlLayer Layer;
+            public AacFlState Standby;
+            public HandAnimatorLayer(AacFlLayer layer)
+            {
+                Layer = layer;
+                Standby = Layer.NewState("Standby", 0, 0);
+            }
         }
 
         /// <summary>
@@ -159,11 +156,10 @@ namespace Lereldarion.DJ
         /// The actual handle (with geometry and tracking triangle) is linearly position constrained on the physbone end.
         /// The physbone arc is aligned to the range, with a angle of 30 degrees on each side, its size and position constrained by the stroke length.
         /// </summary>
-        /// <param name="slider"></param>
-        /// <param name="context"></param>
-        /// <param name="dj_controller_config"></param>
+        /// <param name="slider">Slider descriptor</param>
+        /// <param name="context">Data the current DJ controller being built</param>
         /// <exception cref="System.ArgumentException"></exception>
-        private void SetupSlider(MidiSlider slider, Context context, GenerateMidiOutput dj_controller_config)
+        private void SetupSlider(MidiSlider slider, Context context)
         {
             var error = slider.ConfigurationError();
             if (error != null) { throw new System.ArgumentException($"Slider '{slider.gameObject.name}': {error}"); }
@@ -192,8 +188,8 @@ namespace Lereldarion.DJ
             finger_constraint.AffectsPositionX = parent_stroke_axis == Axis.X;
             finger_constraint.AffectsPositionY = parent_stroke_axis == Axis.Y;
             finger_constraint.AffectsPositionZ = parent_stroke_axis == Axis.Z;
-            finger_constraint.Sources.Add(new VRC.Dynamics.VRCConstraintSource(dj_controller_config.LeftFinger.transform, 0f));
-            finger_constraint.Sources.Add(new VRC.Dynamics.VRCConstraintSource(dj_controller_config.RightFinger.transform, 0f));
+            finger_constraint.Sources.Add(new VRC.Dynamics.VRCConstraintSource(context.Controller.LeftFinger.transform, 0f));
+            finger_constraint.Sources.Add(new VRC.Dynamics.VRCConstraintSource(context.Controller.RightFinger.transform, 0f));
 
             // Physbone : hinge with symmetric ranges, len = stroke, init vector is within the median plane of the stroke
             // Thus triangle of /|\, base = stroke/2 on each side, hypothenuses = stroke, height = sqrt(3)/2, total angle on hinge (top) = 30 deg 
@@ -235,8 +231,8 @@ namespace Lereldarion.DJ
             // One contact and animator setting per hand.
             // Animator layers are one per hand, as one hand may use only one controller at a time.
             // Controllers are locked to one hand at a time using a local driven parameter.
-            int slider_id = context.SliderIndex; context.SliderIndex += 1;
-            void setup_hand(string side_letter, HandAnimatorLayer animator, AacFlEnumIntParameter<AacAv3.Av3Gesture> gesture)
+            int slider_id = context.Animator.UniqueSliderIndex();
+            void setup_hand(string side_letter, int constraint_source, HandAnimatorLayer animator, AacFlEnumIntParameter<AacAv3.Av3Gesture> gesture)
             {
                 VRCContactReceiver contact = slider.gameObject.AddComponent<VRCContactReceiver>();
                 contact.allowOthers = false;
@@ -253,14 +249,14 @@ namespace Lereldarion.DJ
 
                 var active_state = animator.Layer.NewState($"Slider{slider_id}", 1, slider_id);
                 active_state.Drives(is_used_parameter, true);
-                active_state.WithAnimation(context.Aac.NewClip()
+                active_state.WithAnimation(context.Animator.Aac.NewClip()
                     .Animating(SetConstraintActive(finger_constraint, true))
-                    .Animating(SetConstraintActiveSource(finger_constraint, side_letter == "L" ? 0 : 1))
+                    .Animating(SetConstraintActiveSource(finger_constraint, constraint_source))
                 );
 
                 var reset_state = animator.Layer.NewState($"Slider{slider_id} Reset", 2, slider_id);
                 reset_state.Drives(is_used_parameter, false);
-                reset_state.WithAnimation(context.Aac.NewClip()
+                reset_state.WithAnimation(context.Animator.Aac.NewClip()
                     .Animating(SetConstraintActive(finger_constraint, false))
                 );
 
@@ -268,8 +264,47 @@ namespace Lereldarion.DJ
                 active_state.TransitionsTo(reset_state).When(contact_parameter.IsFalse()).And(gesture.IsNotEqualTo(AacAv3.Av3Gesture.Fist)); // Allow keeping hold by grabbing
                 reset_state.TransitionsTo(animator.Standby).Automatically();
             }
-            if (slider.HandTracking != HandTrackingMode.OnlyRight) { setup_hand("L", context.Left, context.Left.Layer.Av3().GestureLeft); }
-            if (slider.HandTracking != HandTrackingMode.OnlyLeft) { setup_hand("R", context.Right, context.Right.Layer.Av3().GestureRight); }
+            if (slider.HandTracking != HandTrackingMode.OnlyRight) { setup_hand("L", 0, context.Animator.Left, context.Animator.Left.Layer.Av3().GestureLeft); }
+            if (slider.HandTracking != HandTrackingMode.OnlyLeft) { setup_hand("R", 1, context.Animator.Right, context.Animator.Right.Layer.Av3().GestureRight); }
+
+            // Slider triangle uv1 : coefficients to compute |handle-minimum| / |maximum-minimum| 
+            var uv0 = new Vector2((float)ShaderElementType.Slider, slider.ScreenX);
+            context.Vertices.Add(new Vertex { transform = slider.Minimum, uv0 = uv0, uv1 = new Vector2(-1.0f, -1.0f) });
+            context.Vertices.Add(new Vertex { transform = slider.Maximum, uv0 = uv0, uv1 = new Vector2(0.0f, 1.0f) });
+            context.Vertices.Add(new Vertex { transform = slider.transform, uv0 = uv0, uv1 = new Vector2(1.0f, 0.0f) });
+
+            Object.DestroyImmediate(slider);
+        }
+
+        /// <summary>
+        /// Setup push button.
+        /// </summary>
+        /// <param name="button">Button descriptor</param>
+        /// <param name="context">Data the current DJ controller being built</param>
+        private void SetupPushButton(MidiPushButton button, Context context)
+        {
+            var error = button.ConfigurationError();
+            if (error != null) { throw new System.ArgumentException($"PushButton '{button.gameObject.name}': {error}"); }
+
+            Transform rest = button.RestOverride;
+            if(rest == null) {
+                var rest_object = new GameObject("Rest Position")
+                {
+                    transform = {
+                        parent = button.TriggerPoint,
+                        position = button.transform.position,
+                    }
+                };
+                rest = rest_object.transform;
+            }
+
+            // Button triangle uv1 : coefficients to compute |handle-rest| / |trigger-rest| 
+            var uv0 = new Vector2((float)ShaderElementType.Slider, button.ScreenX);
+            context.Vertices.Add(new Vertex { transform = rest, uv0 = uv0, uv1 = new Vector2(-1.0f, -1.0f) });
+            context.Vertices.Add(new Vertex { transform = button.TriggerPoint, uv0 = uv0, uv1 = new Vector2(0.0f, 1.0f) });
+            context.Vertices.Add(new Vertex { transform = button.transform, uv0 = uv0, uv1 = new Vector2(1.0f, 0.0f) });
+
+            Object.DestroyImmediate(button);
         }
 
         static private System.Action<AacFlEditClip> SetConstraintActive(VRC.Dynamics.VRCConstraintBase constraint, bool active)
@@ -277,9 +312,12 @@ namespace Lereldarion.DJ
             return clip => { clip.Animates(constraint, "IsActive").WithOneFrame(active ? 1 : 0); };
         }
 
-        static private System.Action<AacFlEditClip> SetConstraintActiveSource(VRC.Dynamics.VRCConstraintBase constraint, int active_source) {
-            return clip => {
-                for (int i = 0; i < constraint.Sources.Count; i += 1) {
+        static private System.Action<AacFlEditClip> SetConstraintActiveSource(VRC.Dynamics.VRCConstraintBase constraint, int active_source)
+        {
+            return clip =>
+            {
+                for (int i = 0; i < constraint.Sources.Count; i += 1)
+                {
                     clip.Animates(constraint, $"Sources.source{i}.Weight").WithOneFrame(i == active_source ? 1 : 0);
                 }
             };

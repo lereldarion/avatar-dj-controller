@@ -126,8 +126,14 @@ Shader "Lereldarion/DjControllerToMidi" {
                 } else if(type == 2 /* slider */) {
                     // Vectors by using UV coefficients
                     float3 min_handle = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
-                    float3 min_max =    mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
+                    float3 min_max    = mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
                     output_01 = dot(min_handle, min_max) / dot(min_max, min_max);
+                } else if(type == 3 /* button */) {
+                    // Vectors by using UV coefficients + step
+                    float3 rest_handle  = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
+                    float3 rest_trigger = mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
+                    float ratio_to_trigger = dot(rest_handle, rest_trigger) / dot(rest_trigger, rest_trigger);
+                    output_01 = step(ratio_to_trigger, 1);
                 } else {
                     // Discard
                     return;

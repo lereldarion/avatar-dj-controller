@@ -531,7 +531,7 @@ Transform:
   m_GameObject: {fileID: 812629891}
   serializedVersion: 2
   m_LocalRotation: {x: 0.5, y: -0.50000006, z: -0.5, w: 0.50000006}
-  m_LocalPosition: {x: 0.5714001, y: 1.0849, z: 0.18670009}
+  m_LocalPosition: {x: 0.57140017, y: 1.0849, z: 0.081900045}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -561,7 +561,7 @@ MonoBehaviour:
     source0:
       SourceTransform: {fileID: 1035853805}
       Weight: 1
-      ParentPositionOffset: {x: 0.09644953, y: -0.042707935, z: 0.20506945}
+      ParentPositionOffset: {x: 0.09644964, y: -0.04270792, z: 0.10026941}
       ParentRotationOffset: {x: -0, y: -90, z: -90}
     source1:
       SourceTransform: {fileID: 0}
@@ -642,7 +642,7 @@ MonoBehaviour:
     overflowList: []
   cachedExecutionGroupIndex: 0
   latestValidExecutionGroupIndex: 0
-  PositionAtRest: {x: 0.57140005, y: 1.0849, z: 0.1867}
+  PositionAtRest: {x: 0.57140017, y: 1.0849, z: 0.0819}
   AffectsPositionX: 1
   AffectsPositionY: 1
   AffectsPositionZ: 1
@@ -712,6 +712,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: button 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6621261381271928630, guid: 0c5244e63f4c10d4bb7cf29ce698fa73,
+        type: 3}
+      propertyPath: Id
+      value: 12
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1266,6 +1271,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: button 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6621261381271928630, guid: 0c5244e63f4c10d4bb7cf29ce698fa73,
+        type: 3}
+      propertyPath: Id
+      value: 11
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2002,6 +2012,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: button 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6621261381271928630, guid: 0c5244e63f4c10d4bb7cf29ce698fa73,
+        type: 3}
+      propertyPath: Id
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
