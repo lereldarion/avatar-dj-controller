@@ -132,6 +132,8 @@ impl windows_capture::capture::GraphicsCaptureApiHandler for CaptureCallbackStat
         let buffer = PixelBuffer::try_from(&mut midi_pixel_block)?;
 
         let mut debug = String::new();
+        let mut has_changed = false;
+
         for controller_id in 0..128 {
             if let Some(value_u7) = buffer.decode_u7_with_check(Vec2::new(controller_id + 1, 0)) {
                 let old = std::mem::replace(
@@ -140,6 +142,7 @@ impl windows_capture::capture::GraphicsCaptureApiHandler for CaptureCallbackStat
                 );
                 if old != Some(value_u7) {
                     // TODO send midi update
+                    has_changed = true;
                 }
                 debug = format!("{debug}{:>3}:{:>3}; ", controller_id, value_u7);
             }
@@ -150,7 +153,9 @@ impl windows_capture::capture::GraphicsCaptureApiHandler for CaptureCallbackStat
         let last_frame_time = std::mem::replace(&mut self.last_frame_time, now);
         let elapsed = now.duration_since(last_frame_time);
         let frame_time = elapsed.as_secs_f64();
-        eprintln!("{debug}dt={:.1}ms", frame_time * 1000.);
+        if has_changed {
+            eprintln!("{debug}dt={:.1}ms", frame_time * 1000.);
+        }
 
         Ok(())
     }
