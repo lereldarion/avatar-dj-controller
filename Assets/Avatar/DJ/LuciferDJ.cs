@@ -27,7 +27,6 @@ namespace Lereldarion {
         public VRCRotationConstraint potentiometer_hand_tracker;
         public VRCContactReceiver potentiometer_contact;
 
-        public VRCParentConstraint menu_slider;
     }
 
     public class LuciferDJPlugin : Plugin<LuciferDJPlugin> {
@@ -101,24 +100,6 @@ namespace Lereldarion {
 
                 enabled.TransitionsTo(world).When(dj_enabled.IsTrue()).And(dj_world.IsTrue());
                 world.TransitionsTo(enabled).When(dj_world.IsFalse());
-            }
-            {
-                var layer = ctrl.NewLayer("DJ/MenuSlider");
-
-                var parameter = layer.FloatParameter("Slider");
-                ma.NewParameter(parameter).NotSaved().WithDefaultValue(0);
-                new_installed_menu_item().Name("Slider").Radial(parameter);
-
-                var tree = aac.NewBlendTree().Simple1D(parameter);
-                tree.WithAnimation(aac.NewClip().Animating(clip => {
-                    clip.Animates(config.menu_slider, "Sources.source0.Weight").WithOneFrame(1);
-                    clip.Animates(config.menu_slider, "Sources.source1.Weight").WithOneFrame(0);
-                }), 0);
-                tree.WithAnimation(aac.NewClip().Animating(clip => {
-                    clip.Animates(config.menu_slider, "Sources.source0.Weight").WithOneFrame(0);
-                    clip.Animates(config.menu_slider, "Sources.source1.Weight").WithOneFrame(1);
-                }), 1);
-                layer.NewState("Tree").WithAnimation(tree);
             }
             // Potentiometer system
             {

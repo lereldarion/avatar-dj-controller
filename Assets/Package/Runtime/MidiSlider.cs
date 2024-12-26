@@ -1,13 +1,51 @@
+using System;
 using UnityEngine;
 
-namespace Lereldarion.DJ {
-/// <summary>
-/// A slider, with range from bottom (0) to top (127), and current value at handle.
-/// </summary>
-[DisallowMultipleComponent]
-public class MidiSlider : MidiController {
-    public Transform bottom;
-    public Transform top;
-    public Transform handle;
-}
+namespace Lereldarion.DJ
+{
+    /// <summary>
+    /// Declaration for a slider.
+    /// Movable handle is self. Parent is the base.
+    /// Range from minimum (0) to maximum (127).
+    /// </summary>
+    [DisallowMultipleComponent]
+    public class MidiSlider : MidiController
+    {
+        [Tooltip("Radius of the finger collider")]
+        public float ColliderRadius = 0.01f;
+
+        [Tooltip("Minimum position (value = 0)")]
+        public Transform Minimum;
+        [Tooltip("Maximum position (value = 127)")]
+        public Transform Maximum;
+
+        [Tooltip("Optionally restrict tracking to one hand only (reduces contact count)")]
+        public HandTrackingMode HandTracking = HandTrackingMode.Both;
+
+        public string ConfigurationError() {
+            if(Minimum == null) { return "Minimum not set"; }
+            if(Maximum == null) { return "Maximum not set"; }
+            if(Minimum.IsChildOf(transform)) { return "Minimum must be static with respect to handle"; }
+            if(Maximum.IsChildOf(transform)) { return "Maximum must be static with respect to handle"; }
+            if(ColliderRadius <= 0.0f) { return "Collider Radius must be strictly positive"; }
+            return null;
+        }
+
+        public void OnDrawGizmosSelected()
+        {
+            if (ColliderRadius > 0)
+            {
+                Gizmos.DrawWireSphere(transform.position, ColliderRadius * transform.lossyScale.x);
+            }
+
+            if (Minimum != null && Maximum != null)
+            {
+                Vector3 stroke = Maximum.position - Minimum.position;
+                Gizmos.DrawLine(
+                    transform.position + Vector3.Project(Minimum.position - transform.position, stroke),
+                    transform.position + Vector3.Project(Maximum.position - transform.position, stroke)
+                );
+            }
+        }
+    }
 }

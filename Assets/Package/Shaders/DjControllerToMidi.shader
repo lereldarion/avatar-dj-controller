@@ -125,9 +125,9 @@ Shader "Lereldarion/DjControllerToMidi" {
                     return;
                 } else if(type == 2 /* slider */) {
                     // Vectors by using UV coefficients
-                    float3 bottom_handle = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
-                    float3 bottom_top =    mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
-                    output_01 = dot(bottom_handle, bottom_top) / dot(bottom_top, bottom_top);
+                    float3 min_handle = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
+                    float3 min_max =    mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
+                    output_01 = dot(min_handle, min_max) / dot(min_max, min_max);
                 } else {
                     // Discard
                     return;
