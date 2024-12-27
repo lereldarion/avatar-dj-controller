@@ -51,4 +51,17 @@ namespace Lereldarion.DJ
     public enum HandTrackingMode { Both, OnlyLeft, OnlyRight }
     
     public enum Axis { X, Y, Z }
+
+    public static class Extensions
+    {
+        public static Vector3 GetVector(this Axis axis, Transform transform)
+        {
+            switch (axis)
+            {
+                case Axis.X: return transform.right;
+                case Axis.Y: return transform.up;
+                default: return transform.forward;
+            }
+        }
+    }
 }

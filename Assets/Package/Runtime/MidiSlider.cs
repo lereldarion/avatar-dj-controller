@@ -11,7 +11,7 @@ namespace Lereldarion.DJ
     public class MidiSlider : MidiController
     {
         [Tooltip("Radius of the finger collider")]
-        public float ColliderRadius = 0.01f;
+        public float ColliderRadius = 0.015f;
 
         [Tooltip("Minimum position (value = 0)")]
         public Transform Minimum;

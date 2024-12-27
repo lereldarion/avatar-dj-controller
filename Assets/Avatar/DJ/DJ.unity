@@ -779,6 +779,7 @@ Transform:
   - {fileID: 100758481}
   - {fileID: 310496616}
   - {fileID: 1713857998523660739}
+  - {fileID: 1443051128}
   m_Father: {fileID: 812629892}
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: -90}
 --- !u!114 &924806155
@@ -1209,6 +1210,256 @@ MonoBehaviour:
   potentiometer_driver: {fileID: 1233134794}
   potentiometer_hand_tracker: {fileID: 1091765935}
   potentiometer_contact: {fileID: 204661180}
+--- !u!1001 &1443051127
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 924806153}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.12
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.04
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -5346598818530930575, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -5346598818530930575, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.0000016614795
+      objectReference: {fileID: 0}
+    - target: {fileID: -5346598818530930575, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.000000014901161
+      objectReference: {fileID: 0}
+    - target: {fileID: -5346598818530930575, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.000000007450581
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      propertyPath: m_Name
+      value: potentiometer
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -4524874626058609607, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1443051133}
+    - targetCorrespondingSourceObject: {fileID: -2426543533514890459, guid: 2d44c8da088828449ba77b1599350e11,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1443051131}
+  m_SourcePrefab: {fileID: 100100000, guid: 2d44c8da088828449ba77b1599350e11, type: 3}
+--- !u!4 &1443051128 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2d44c8da088828449ba77b1599350e11,
+    type: 3}
+  m_PrefabInstance: {fileID: 1443051127}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1443051129 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -2426543533514890459, guid: 2d44c8da088828449ba77b1599350e11,
+    type: 3}
+  m_PrefabInstance: {fileID: 1443051127}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1443051130 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4145253205537715308, guid: 2d44c8da088828449ba77b1599350e11,
+    type: 3}
+  m_PrefabInstance: {fileID: 1443051127}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1443051131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1443051129}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1788371120, guid: 58e2f01a24261a14cb82e6d3399e8b16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IsActive: 1
+  GlobalWeight: 0.5
+  TargetTransform: {fileID: 0}
+  SolveInLocalSpace: 0
+  FreezeToWorld: 0
+  RebakeOffsetsWhenUnfrozen: 0
+  Locked: 1
+  Sources:
+    source0:
+      SourceTransform: {fileID: 1443051130}
+      Weight: 1
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source1:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source2:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source3:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source4:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source5:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source6:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source7:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source8:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source9:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source10:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source11:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source12:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source13:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source14:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    source15:
+      SourceTransform: {fileID: 0}
+      Weight: 0
+      ParentPositionOffset: {x: 0, y: 0, z: 0}
+      ParentRotationOffset: {x: 0, y: 0, z: 0}
+    totalLength: 1
+    overflowList: []
+  cachedExecutionGroupIndex: 1
+  latestValidExecutionGroupIndex: 1
+  RotationAtRest: {x: 0, y: 0, z: 0}
+  RotationOffset: {x: 0, y: 0, z: 0}
+  AffectsRotationX: 1
+  AffectsRotationY: 1
+  AffectsRotationZ: 1
+--- !u!1 &1443051132 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4524874626058609607, guid: 2d44c8da088828449ba77b1599350e11,
+    type: 3}
+  m_PrefabInstance: {fileID: 1443051127}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1443051133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1443051132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 209fa92f2ca73984380b7aaa071d0b2f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Id: 0
+  ColliderRadius: 0.015
+  RotationAxis: 1
+  FlipRotationAxis: 0
+  CursorLocation: 180
+  MinimumLocation: 150
+  MaximumLocation: 150
+  BaseOverride: {fileID: 0}
+  HandTracking: 0
 --- !u!1001 &1468500987
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1926,7 +2177,7 @@ PrefabInstance:
     - target: {fileID: 3248762065930648792, guid: 3ffd99c87e0f9a04a89d02334df0c0d4,
         type: 3}
       propertyPath: m_Name
-      value: potentiometer
+      value: potentiometer_old
       objectReference: {fileID: 0}
     - target: {fileID: 3611174049243305376, guid: 3ffd99c87e0f9a04a89d02334df0c0d4,
         type: 3}

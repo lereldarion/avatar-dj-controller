@@ -135,8 +135,8 @@ namespace Lereldarion.DJ
             public HandAnimatorLayer Left;
             public HandAnimatorLayer Right;
 
-            private int next_slider_index = 0;
-            public int UniqueSliderIndex() { return next_slider_index++; }
+            private int id = 0;
+            public int UniqueId() { return id++; }
         }
         private class HandAnimatorLayer
         {
@@ -231,7 +231,7 @@ namespace Lereldarion.DJ
             // One contact and animator setting per hand.
             // Animator layers are one per hand, as one hand may use only one controller at a time.
             // Controllers are locked to one hand at a time using a local driven parameter.
-            int slider_id = context.Animator.UniqueSliderIndex();
+            int id = context.Animator.UniqueId();
             void setup_hand(string side_letter, int constraint_source, HandAnimatorLayer animator, AacFlEnumIntParameter<AacAv3.Av3Gesture> gesture)
             {
                 VRCContactReceiver contact = slider.gameObject.AddComponent<VRCContactReceiver>();
@@ -242,19 +242,19 @@ namespace Lereldarion.DJ
                 contact.radius = slider.ColliderRadius;
                 contact.collisionTags.Add($"FingerIndex{side_letter}");
                 contact.collisionTags.Add($"FingerMiddle{side_letter}"); // More flexible ? TODO config point
-                contact.parameter = $"DJ/Slider{slider_id}/Contact{side_letter}";
+                contact.parameter = $"DJ/Slider{id}/Contact{side_letter}";
 
                 var contact_parameter = animator.Layer.BoolParameter(contact.parameter);
-                var is_used_parameter = animator.Layer.BoolParameter($"DJ/Slider{slider_id}/Used");
+                var is_used_parameter = animator.Layer.BoolParameter($"DJ/Slider{id}/Used");
 
-                var active_state = animator.Layer.NewState($"Slider{slider_id}", 1, slider_id);
+                var active_state = animator.Layer.NewState($"Slider{id}", 1, id);
                 active_state.Drives(is_used_parameter, true);
                 active_state.WithAnimation(context.Animator.Aac.NewClip()
                     .Animating(SetConstraintActive(finger_constraint, true))
                     .Animating(SetConstraintActiveSource(finger_constraint, constraint_source))
                 );
 
-                var reset_state = animator.Layer.NewState($"Slider{slider_id} Reset", 2, slider_id);
+                var reset_state = animator.Layer.NewState($"Slider{id} Reset", 2, id);
                 reset_state.Drives(is_used_parameter, false);
                 reset_state.WithAnimation(context.Animator.Aac.NewClip()
                     .Animating(SetConstraintActive(finger_constraint, false))
@@ -287,7 +287,8 @@ namespace Lereldarion.DJ
             if (error != null) { throw new System.ArgumentException($"PushButton '{button.gameObject.name}': {error}"); }
 
             Transform rest = button.RestOverride;
-            if(rest == null) {
+            if (rest == null)
+            {
                 var rest_object = new GameObject("Rest Position")
                 {
                     transform = {
@@ -299,7 +300,7 @@ namespace Lereldarion.DJ
             }
 
             // Button triangle uv1 : coefficients to compute |handle-rest| / |trigger-rest| 
-            var uv0 = new Vector2((float)ShaderElementType.Slider, button.ScreenX);
+            var uv0 = new Vector2((float)ShaderElementType.Button, button.ScreenX);
             context.Vertices.Add(new Vertex { transform = rest, uv0 = uv0, uv1 = new Vector2(-1.0f, -1.0f) });
             context.Vertices.Add(new Vertex { transform = button.TriggerPoint, uv0 = uv0, uv1 = new Vector2(0.0f, 1.0f) });
             context.Vertices.Add(new Vertex { transform = button.transform, uv0 = uv0, uv1 = new Vector2(1.0f, 0.0f) });
@@ -326,14 +327,9 @@ namespace Lereldarion.DJ
 
     public static class Extensions
     {
-        public static Vector3 AxisVector(this Transform transform, Axis axis)
+        public static Vector3 AxisVector(this Transform transform, Axis Axis)
         {
-            switch (axis)
-            {
-                case Axis.X: return transform.right;
-                case Axis.Y: return transform.up;
-                default: return transform.forward;
-            }
+            return Axis.GetVector(transform);
         }
 
         public static Axis? AxisMatchingDirection(this Transform transform, Vector3 direction)
