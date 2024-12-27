@@ -1451,14 +1451,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 209fa92f2ca73984380b7aaa071d0b2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Id: 0
+  Id: 20
   ColliderRadius: 0.015
   RotationAxis: 1
   FlipRotationAxis: 0
   CursorLocation: 180
   MinimumLocation: 150
   MaximumLocation: 150
-  BaseOverride: {fileID: 0}
   HandTracking: 0
 --- !u!1001 &1468500987
 PrefabInstance:
@@ -2187,7 +2186,11 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6980835279449578928, guid: 3ffd99c87e0f9a04a89d02334df0c0d4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1713857998523660741}
   m_SourcePrefab: {fileID: 100100000, guid: 3ffd99c87e0f9a04a89d02334df0c0d4, type: 3}
 --- !u!4 &1713857998523660738 stripped
 Transform:
@@ -2201,6 +2204,32 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1713857998523660737}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1713857998523660740 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6980835279449578928, guid: 3ffd99c87e0f9a04a89d02334df0c0d4,
+    type: 3}
+  m_PrefabInstance: {fileID: 1713857998523660737}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1713857998523660741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1713857998523660740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 209fa92f2ca73984380b7aaa071d0b2f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Id: 21
+  ColliderRadius: 0.015
+  RotationAxis: 1
+  FlipRotationAxis: 0
+  CursorLocation: -180
+  MinimumLocation: 150
+  MaximumLocation: 150
+  HandTracking: 0
 --- !u!1001 &2385185352318961152
 PrefabInstance:
   m_ObjectHideFlags: 0

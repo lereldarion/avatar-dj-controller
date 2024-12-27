@@ -53,26 +53,37 @@ namespace Lereldarion.DJ
         }
 
         /// <summary>
-        /// uv0 (type, screen_x)
-        /// uv1 type-dependent data
-        /// type is the type of element, and controls what the shader code should compute.
-        /// screen_x is the channel layout : [auto_offset_tag:1][controllers:127][note:127]
-        /// Using float2 uv because d4rkAvatarOptimizer does not expect float4 uvs...
+        /// Generated mesh vertex data.
+        /// Using float2 uv because avatar optimizer tools do not like float4 uvs...
         /// </summary>
+        private class Vertex
+        {
+            /// <summary>Position and bone assignment</summary>
+            public Transform transform;
+            /// <summary>
+            /// uv0 = (type, screen_x).
+            /// type is the type of element (ShaderElementType), and controls what the shader code should compute.
+            /// screen_x is the channel layout : [auto_offset_tag:1][controllers:127][note:127]
+            /// </summary>
+            public Vector2 uv0;
+            /// <summary>uv1 type-dependent data</summary>
+            public Vector2 uv1;
+            /// <summary>A direction vector stored in normal slot. Will be rotated. Value here in world space.</summary>
+            public Vector3 direction = Vector3.forward;
+        };
         internal enum ShaderElementType
         {
+            /// <summary>Unused, and ignored by shader</summary>
             Undefined = 0,
+            /// <summary>Fixed pattern used to guide screen capture</summary>
             AutoOffsetTag = 1,
+            /// <summary>Track a linear motion in a range, continuous</summary>
             Slider = 2,
+            /// <summary>Track a linear motion in a range, but apply step() to have a binary value output</summary>
             Button = 3,
+            /// <summary>Track a rotation in a range, continuous</summary>
+            RotationRange = 4,
         }
-
-        private struct Vertex
-        {
-            public Transform transform;
-            public Vector2 uv0;
-            public Vector2 uv1;
-        };
 
         /// <summary>
         /// Create controller mesh renderer, animator layers, gameobjects from descriptor components.
@@ -97,10 +108,12 @@ namespace Lereldarion.DJ
 
             foreach (var slider in root.GetComponentsInChildren<MidiSlider>(true)) { SetupSlider(slider, context); }
             foreach (var button in root.GetComponentsInChildren<MidiPushButton>(true)) { SetupPushButton(button, context); }
+            foreach (var potentiometer in root.GetComponentsInChildren<MidiPotentiometer>(true)) { SetupPotentiometer(potentiometer, context); }
 
             mesh.vertices = vertices.Select(vertex => root.InverseTransformPoint(vertex.transform.position)).ToArray();
             mesh.SetUVs(0, vertices.Select(vertex => vertex.uv0).ToArray());
             mesh.SetUVs(1, vertices.Select(vertex => vertex.uv1).ToArray());
+            mesh.SetNormals(vertices.Select(vertex => root.InverseTransformDirection(vertex.direction)).ToArray());
             mesh.triangles = Enumerable.Range(0, vertices.Count()).ToArray();
 
             Transform[] bones = vertices.Select(vertex => vertex.transform).ToArray();
@@ -157,7 +170,7 @@ namespace Lereldarion.DJ
         /// The physbone arc is aligned to the range, with a angle of 30 degrees on each side, its size and position constrained by the stroke length.
         /// </summary>
         /// <param name="slider">Slider descriptor</param>
-        /// <param name="context">Data the current DJ controller being built</param>
+        /// <param name="context">Data of the current DJ controller being built</param>
         /// <exception cref="System.ArgumentException"></exception>
         private void SetupSlider(MidiSlider slider, Context context)
         {
@@ -269,9 +282,9 @@ namespace Lereldarion.DJ
 
             // Slider triangle uv1 : coefficients to compute |handle-minimum| / |maximum-minimum| 
             var uv0 = new Vector2((float)ShaderElementType.Slider, slider.ScreenX);
-            context.Vertices.Add(new Vertex { transform = slider.Minimum, uv0 = uv0, uv1 = new Vector2(-1.0f, -1.0f) });
-            context.Vertices.Add(new Vertex { transform = slider.Maximum, uv0 = uv0, uv1 = new Vector2(0.0f, 1.0f) });
-            context.Vertices.Add(new Vertex { transform = slider.transform, uv0 = uv0, uv1 = new Vector2(1.0f, 0.0f) });
+            context.Vertices.Add(new Vertex { transform = slider.Minimum, uv0 = uv0, uv1 = new Vector2(-1f, -1f) });
+            context.Vertices.Add(new Vertex { transform = slider.Maximum, uv0 = uv0, uv1 = new Vector2(0f, 1f) });
+            context.Vertices.Add(new Vertex { transform = slider.transform, uv0 = uv0, uv1 = new Vector2(1f, 0f) });
 
             Object.DestroyImmediate(slider);
         }
@@ -280,7 +293,8 @@ namespace Lereldarion.DJ
         /// Setup push button.
         /// </summary>
         /// <param name="button">Button descriptor</param>
-        /// <param name="context">Data the current DJ controller being built</param>
+        /// <param name="context">Data of the current DJ controller being built</param>
+        /// <exception cref="System.ArgumentException"></exception>
         private void SetupPushButton(MidiPushButton button, Context context)
         {
             var error = button.ConfigurationError();
@@ -301,11 +315,39 @@ namespace Lereldarion.DJ
 
             // Button triangle uv1 : coefficients to compute |handle-rest| / |trigger-rest| 
             var uv0 = new Vector2((float)ShaderElementType.Button, button.ScreenX);
-            context.Vertices.Add(new Vertex { transform = rest, uv0 = uv0, uv1 = new Vector2(-1.0f, -1.0f) });
-            context.Vertices.Add(new Vertex { transform = button.TriggerPoint, uv0 = uv0, uv1 = new Vector2(0.0f, 1.0f) });
-            context.Vertices.Add(new Vertex { transform = button.transform, uv0 = uv0, uv1 = new Vector2(1.0f, 0.0f) });
+            context.Vertices.Add(new Vertex { transform = rest, uv0 = uv0, uv1 = new Vector2(-1f, -1f) });
+            context.Vertices.Add(new Vertex { transform = button.TriggerPoint, uv0 = uv0, uv1 = new Vector2(0f, 1f) });
+            context.Vertices.Add(new Vertex { transform = button.transform, uv0 = uv0, uv1 = new Vector2(1f, 0f) });
 
             Object.DestroyImmediate(button);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="potentiometer">Potentiometer descriptor</param>
+        /// <param name="context">Data of the current DJ controller being built</param>
+        /// <exception cref="System.ArgumentException"></exception>
+        private void SetupPotentiometer(MidiPotentiometer potentiometer, Context context)
+        {
+            var error = potentiometer.ConfigurationError();
+            if (error != null) { throw new System.ArgumentException($"Potentiometer '{potentiometer.gameObject.name}': {error}"); }
+
+            var directions = potentiometer.GetDirections();
+            // FIXME use when building the animator 
+            // Axis parent_rotation_axis = potentiometer.transform.AlignParentAxisTo(directions.RotationAxis);
+            // TODO if we want to mutualise the hand rotation tracker objects, we need to defer creating the animations to the end...
+
+            // Potentiometer triangle : using vectors to encode base plane (x, y) and cursor
+            var uv0 = new Vector2((float)ShaderElementType.RotationRange, potentiometer.ScreenX);
+            float range_rad = Mathf.Deg2Rad * (potentiometer.MinimumLocation + potentiometer.MaximumLocation);
+            Vector3 base_plane_x = directions.Minimum;
+            Vector3 base_plane_y = Quaternion.AngleAxis(90f, directions.RotationAxis) * directions.Minimum;
+            context.Vertices.Add(new Vertex { transform = potentiometer.transform.parent, uv0 = uv0, uv1 = new Vector2(0f, range_rad), direction = base_plane_x });
+            context.Vertices.Add(new Vertex { transform = potentiometer.transform.parent, uv0 = uv0, uv1 = new Vector2(1f, range_rad), direction = base_plane_y });
+            context.Vertices.Add(new Vertex { transform = potentiometer.transform, uv0 = uv0, uv1 = new Vector2(2f, range_rad), direction = directions.Cursor });
+
+            Object.DestroyImmediate(potentiometer);
         }
 
         static private System.Action<AacFlEditClip> SetConstraintActive(VRC.Dynamics.VRCConstraintBase constraint, bool active)

@@ -24,14 +24,11 @@ namespace Lereldarion.DJ
         [Tooltip("Location of maximum (value = 127) range of the potentiometer (green ray)")]
         [Range(0f, 360f)]
         public float MaximumLocation = 145f;
-        [Tooltip("Fixed base transform ; defaults to using self.parent")]
-        public Transform BaseOverride;
         [Tooltip("Optionally restrict tracking to one hand only (reduces contact count)")]
         public HandTrackingMode HandTracking = HandTrackingMode.Both;
 
         public string ConfigurationError()
         {
-            if (BaseOverride != null && BaseOverride.IsChildOf(transform)) { return "Base override must be static with respect to handle"; }
             if (ColliderRadius <= 0.0f) { return "Collider Radius must be strictly positive"; }
             if (MinimumLocation + MaximumLocation > 360f) { return "Rotation range exceeds 360 degrees"; }
             return null;
@@ -47,7 +44,7 @@ namespace Lereldarion.DJ
         public Directions GetDirections()
         {
             Vector3 rotation_axis = RotationAxis.GetVector(transform);
-            if(FlipRotationAxis) { rotation_axis = -rotation_axis; }
+            if (FlipRotationAxis) { rotation_axis = -rotation_axis; }
             Vector3 reference_axis = (RotationAxis != Axis.Z ? Axis.Z : Axis.Y).GetVector(transform);
             return new Directions
             {
@@ -69,23 +66,23 @@ namespace Lereldarion.DJ
 
                 var directions = GetDirections();
                 Gizmos.DrawLine(transform.position, transform.position + directions.Cursor * radius);
-                void draw_arc_from_cursor(float angle, int segments)
                 {
-                    var points = new Vector3[segments + 1];
-                    Vector3 direction = directions.Cursor * radius * 0.9f;
-                    Quaternion step_rotation = Quaternion.AngleAxis(angle / segments, directions.RotationAxis);
-                    for(int i = 0; i <= segments; i += 1) {
+                    int segments = 20;
+                    Vector3[] points = new Vector3[segments + 1];
+                    Vector3 direction = directions.Minimum * radius * 0.9f;
+                    Quaternion step_rotation = Quaternion.AngleAxis((MaximumLocation + MinimumLocation) / segments, directions.RotationAxis);
+                    for (int i = 0; i <= segments; i += 1)
+                    {
                         points[i] = transform.position + direction;
                         direction = step_rotation * direction;
                     }
+                    if (MaximumLocation + MinimumLocation > 360f) { Gizmos.color = Color.red; }
                     Gizmos.DrawLineStrip(points, false);
                 }
-                draw_arc_from_cursor(-MinimumLocation, 10);
-                draw_arc_from_cursor(+MaximumLocation, 10);
 
-                Gizmos.color = Color.red;
+                Gizmos.color = Color.black;
                 Gizmos.DrawLine(transform.position, transform.position + directions.Minimum * radius);
-                Gizmos.color = Color.green;
+                Gizmos.color = Color.white;
                 Gizmos.DrawLine(transform.position, transform.position + directions.Maximum * radius);
             }
         }

@@ -38,15 +38,15 @@ Shader "Lereldarion/DjControllerToMidi" {
 
             struct VertexData {
                 float3 position_os : POSITION;
-                float3 normal_os_unnormalized : NORMAL; // May be not normalized after skinning
                 float2 uv0 : TEXCOORD0;
                 float2 uv1 : TEXCOORD1;
+                float3 direction_os : NORMAL;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct GeometryVertexData {
                 float3 position_os : POSITION_OS;
-                float3 normal_os : NORMAL_OS;
+                float3 direction_os : DIRECTION_OS;
                 float2 uv0 : TEXCOORD0;
                 float2 uv1 : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -77,7 +77,7 @@ Shader "Lereldarion/DjControllerToMidi" {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
                 output.position_os = input.position_os;
-                output.normal_os = normalize(input.normal_os_unnormalized);
+                output.direction_os = normalize(input.direction_os); // May be not normalized after skinning, or never normalized in the generated mesh at all.
                 output.uv0 = input.uv0;
                 output.uv1 = input.uv1;
             }
@@ -105,6 +105,15 @@ Shader "Lereldarion/DjControllerToMidi" {
                 draw_bit_pattern_as_line(stream, bits, bit_count, pixel_position);
             }
 
+            float3 select_row(float3x3 m, float3 row_keys, float key) {
+                bool3 selected = row_keys == key;
+                if(selected[0]) { return m[0]; }
+                if(selected[1]) { return m[1]; }
+                return m[2];
+            }
+
+            static const float pi = 3.14159265358;
+
             [maxvertexcount(2)]
             void geometry_stage(triangle GeometryVertexData input[3], inout LineStream<FragmentInput> stream, uint triangle_id : SV_PrimitiveID) {
                 UNITY_SETUP_INSTANCE_ID(input[0]);
@@ -118,27 +127,45 @@ Shader "Lereldarion/DjControllerToMidi" {
                 float output_01 = 0;
 
                 float3x3 positions = float3x3(input[0].position_os, input[1].position_os, input[2].position_os);
+                float3x3 directions = float3x3(input[0].direction_os, input[1].direction_os, input[2].direction_os);
 
-                UNITY_BRANCH
-                if(type == 1 /* auto offset tag */) {
-                    draw_bit_pattern_as_line(stream, 0xAAAA, 16, float2(0, 0));
-                    return;
-                } else if(type == 2 /* slider */) {
-                    // Vectors by using UV coefficients
-                    float3 min_handle = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
-                    float3 min_max    = mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
-                    output_01 = dot(min_handle, min_max) / dot(min_max, min_max);
-                } else if(type == 3 /* button */) {
-                    // Vectors by using UV coefficients + step
-                    float3 rest_handle  = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
-                    float3 rest_trigger = mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
-                    float ratio_to_trigger = dot(rest_handle, rest_trigger) / dot(rest_trigger, rest_trigger);
-                    output_01 = step(ratio_to_trigger, 1);
-                } else {
-                    // Discard
-                    return;
+                switch(type) {
+                    case 1: {
+                        // Auto offset tag
+                        draw_bit_pattern_as_line(stream, 0xAAAA, 16, float2(0, 0));
+                        return;
+                    }
+                    case 2: {
+                        // Slider
+                        float3 min_handle = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
+                        float3 min_max    = mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
+                        output_01 = dot(min_handle, min_max) / dot(min_max, min_max);
+                        break;
+                    }
+                    case 3: {
+                        // Button
+                        float3 rest_handle  = mul(float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x), positions);
+                        float3 rest_trigger = mul(float3(input[0].uv1.y, input[1].uv1.y, input[2].uv1.y), positions);
+                        float ratio_to_trigger = dot(rest_handle, rest_trigger) / dot(rest_trigger, rest_trigger);
+                        output_01 = step(1, ratio_to_trigger);
+                        break;
+                    }
+                    case 4: {
+                        // Rotation range
+                        float angle_range_rad = input[0].uv1.y; // Same value in all 3 slots
+                        float3 ids = float3(input[0].uv1.x, input[1].uv1.x, input[2].uv1.x);
+                        float3 plane_x = select_row(directions, ids, 0);
+                        float3 plane_y = select_row(directions, ids, 1);
+                        float3 cursor = select_row(directions, ids, 2);
+                        // [-pi, pi], 0 is minimum direction
+                        float angle = atan2(dot(plane_y, cursor), dot(plane_x, cursor));
+                        // Translate to [0, range]. Place discontinuity at middle of unused range.
+                        if(angle < angle_range_rad / 2 - pi) { angle += 2 * pi; }
+                        output_01 = angle / angle_range_rad;
+                        break;
+                    }
+                    default: return;
                 }
-
                 draw_midi_value_01_as_bit_line(stream, output_01, float2(screen_x, 0));
             }
 
